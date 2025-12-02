@@ -119,17 +119,17 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-    # Очищаем экран
-    screen.fill(BOARD_BACKGROUND_COLOR)
+        # Очищаем экран
+        screen.fill(BOARD_BACKGROUND_COLOR)
 
-    # Обноваляем экран
-    pygame.display.update()
+        # Обноваляем экран
+        pygame.display.update()
 
-    # Ограничиваем FPS
-    clock.tick(SPEED)
+        # Ограничиваем FPS
+        clock.tick(SPEED)
 
 
-pygame.quit()
+    pygame.quit()
 
 
 if __name__ == '__main__':

@@ -95,7 +95,6 @@ class Snake(GameObject):
         self.direction = RIGHT
         self.next_direction = None
         self.last = None  # Для хранения позиции последнего сегмента
-        self.grow_next_move = False  # ФЛАГ: нужно ли вырасти на следующем ходу
 
     def get_head_position(self):
         """Возвращает позицию головы змейки."""
@@ -110,22 +109,18 @@ class Snake(GameObject):
         dx, dy = self.direction
         new_x = (head_x + dx * GRID_SIZE) % SCREEN_WIDTH
         new_y = (head_y + dy * GRID_SIZE) % SCREEN_HEIGHT
-
-        # Сохраняем старую позицию хвоста
-        self.last = self.positions[-1] if self.positions else None
+        new_position = (new_x, new_y)
 
         # Добавляем новую голову в начало списка
-        self.positions.insert(0, (new_x, new_y))
+        self.positions.insert(0, new_position)
 
-        # Если не нужно расти на этом ходу, удаляем хвост
-        if not self.grow_next_move:
-            if self.positions:
-                self.positions.pop()
+        # Если длина списка стала больше чем должна быть - удаляем последний элемент
+        if len(self.positions) > self.length:
+            self.last = self.positions.pop()
         else:
-            # Сбрасываем флаг роста
-            self.grow_next_move = False
+            self.last = None
 
-        return (new_x, new_y)
+        return new_position
 
     def check_collision(self):
         """Проверяет не столкнулась ли змейка сама с собой"""
@@ -153,15 +148,10 @@ class Snake(GameObject):
 
     def draw(self):
         """Отрисовывает змейку на экране."""
-        for position in self.positions[:-1]:
+        for position in self.positions:
             rect = (pygame.Rect(position, (GRID_SIZE, GRID_SIZE)))
             pygame.draw.rect(screen, self.body_color, rect)
             pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
-
-        # Отрисовка головы змейки
-        head_rect = pygame.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
-        pygame.draw.rect(screen, self.body_color, head_rect)
-        pygame.draw.rect(screen, BORDER_COLOR, head_rect, 1)
 
         # Затирание последнего сегмента
         if self.last:
@@ -215,10 +205,8 @@ def main():
         # Проверка съедания яблока
         if new_head_position == apple.position:
             snake.length += 1  # Увеличиваем длину змейки
-            snake.grow_next_move = True  # Установка флага роста
             apple.randomize_position()  # Создаем новое яблоко
             print(f"Съедено яблоко! Длина змейки: {snake.length}")
-            print(f"Позиций в списке: {len(snake.positions)}")  # Для отладки
 
         # Проверка столкновения с собой
         if snake.check_collision():

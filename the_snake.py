@@ -185,6 +185,7 @@ def main():
     # Создаем объекты
     snake = Snake()
     apple = Apple()
+    score = 0
 
     print('Игра запущена! Змейка создана.')
     print(f'Позиция змейки: {snake.positions}')
@@ -206,12 +207,14 @@ def main():
         if new_head_position == apple.position:
             snake.length += 1  # Увеличиваем длину змейки
             apple.randomize_position()  # Создаем новое яблоко
-            print(f"Съедено яблоко! Длина змейки: {snake.length}")
+            score += 10
+            print(f"Съедено яблоко! Длина: {snake.length}, Очки: {score}")
 
         # Проверка столкновения с собой
         if snake.check_collision():
             print("Столкновение! Игра начинается заново.")
             snake.reset()
+            score = 0
 
         # Очищаем экран
         screen.fill(BOARD_BACKGROUND_COLOR)

@@ -178,14 +178,49 @@ def handle_keys(game_object):
     return True
 
 
+def draw_pause_screen(screen, score, score_font, title_font):
+    """Отрисовывает экран паузы."""
+    # Создаем полупрозрачную поверхность
+    overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 150))
+
+    # Отрисовываем затемнение
+    screen.blit(overlay, (0, 0))
+
+    # Рисуем слово "ПАУЗА" в центре
+    pause_text = title_font.render('ПАУЗА', True, (255, 255, 255))
+    pause_rect = pause_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+    screen.blit(pause_text, pause_rect)
+
+    # Рисуем текущий счет вверху слева
+    score_text = score_font.render(f'Очки: {score}', True, (255, 255, 255))
+    screen.blit(score_text, (10, 10))
+
+    # Инструкция для продолжения
+    instruction = score_font.render('Нажмите ПРОБЕЛ для продолжения', True, (200, 200, 200))
+    instruction_rect = instruction.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50))
+    screen.blit(instruction, instruction_rect)
+
+
 def main():
     """Основная логика игры."""
     pygame.init()
+
+    # Инициализация шрифтов
+    try:
+        title_font = pygame.font.SysFont('Arial', 48, bold=True)
+        score_font = pygame.font.SysFont('Arial', 25)
+    except:
+        title_font = pygame.font.Font(None, 48)
+        score_font = pygame.font.Font(None, 25)
 
     # Создаем объекты
     snake = Snake()
     apple = Apple()
     score = 0
+
+    # Инициализируем переменную паузы
+    paused = False  # <-- ДОБАВЬТЕ ЭТУ СТРОЧКУ
 
     print('Игра запущена! Змейка создана.')
     print(f'Позиция змейки: {snake.positions}')
@@ -194,24 +229,41 @@ def main():
     # Основной игровой цикл
     running = True
     while running:
-        # Обработка событий
-        running = handle_keys(snake)
+        # Обработка событий (общая для паузы и игры)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # Пробел переключает паузу
+                    paused = not paused
+                    print("Пауза" if paused else "Продолжение")
+                elif not paused:  # Управление змейкой только вне паузы
+                    if event.key == pygame.K_UP and snake.direction != DOWN:
+                        snake.next_direction = UP
+                    elif event.key == pygame.K_DOWN and snake.direction != UP:
+                        snake.next_direction = DOWN
+                    elif event.key == pygame.K_LEFT and snake.direction != RIGHT:
+                        snake.next_direction = LEFT
+                    elif event.key == pygame.K_RIGHT and snake.direction != LEFT:
+                        snake.next_direction = RIGHT
 
-        # Обновления направления
-        snake.update_direction()
+        if not paused:
+            # Обновления направления
+            snake.update_direction()
 
-        # Движение змейки
-        new_head_position = snake.move()
+            # Движение змейки
+            new_head_position = snake.move()
 
-        # Проверка съедания яблока
-        if new_head_position == apple.position:
-            snake.length += 1  # Увеличиваем длину змейки
-            apple.randomize_position()  # Создаем новое яблоко
-            score += 10
-            print(f"Съедено яблоко! Длина: {snake.length}, Очки: {score}")
+            # Проверка съедания яблока
+            if new_head_position == apple.position:
+                snake.length += 1
+                score += 10
+                apple.randomize_position()
+                print(f"Съедено яблоко! Длина: {snake.length}, Очки: {score}")
 
-        # Проверка столкновения с собой
-        if snake.check_collision():
+        # Проверка столкновения с собой (только когда игра не на паузе)
+        if not paused and snake.check_collision():
             print("Столкновение! Игра начинается заново.")
             snake.reset()
             score = 0
@@ -222,6 +274,10 @@ def main():
         # Отрисовывем объекты
         apple.draw()
         snake.draw()
+
+        # Если игра на паузе - отрисовываем экран паузы
+        if paused:
+            draw_pause_screen(screen, score, score_font, title_font)
 
         # Обноваляем экран
         pygame.display.update()
